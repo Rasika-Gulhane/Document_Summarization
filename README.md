@@ -8,7 +8,7 @@ Repository URL: 584210880842.dkr.ecr.us-east-1.amazonaws.com/doc_summarization
 
 
 Clone the project using link [https://github.com/Rasika-Gulhane/Document_Summarization.git]
-* open in Some IDE (recommended VSCODE)
+* open in IDE (recommended VSCODE)
 * open terminal in project
 * Create python Environment
 
