@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Text Summarization</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #36afc5;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 36px;
+      font-family: "Arial Black", sans-serif;
+      color: #333;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    form {
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: #c4bbbb;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+      color: #333;
+    }
+
+    textarea {
+      width: 97%;
+      height: 200px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      resize: vertical;
+    }
+
+    input[type="file"] {
+      margin-bottom: 10px;
+    }
+
+    p {
+      margin-bottom: 5px;
+    }
+
+    .word-count {
+      color: #777;
+      font-size: 12px;
+    }
+
+    .summary-button {
+      background-color: #4CAF50;
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 16px;
+      margin-top: 10px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    .summary-button:hover {
+      background-color: #45a049;
+    }
+
+    .summary-output {
+      margin-top: 20px;
+    }
+
+    .summary-output textarea {
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 10px;
+      font-size: 14px;
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
+  <script>
+    function countWords(text) {
+      // Remove leading and trailing white spaces
+      text = text.trim();
+
+      // Split the text by white spaces
+      var words = text.split(/\s+/);
+
+      // Remove empty words
+      words = words.filter(function(word) {
+        return word !== '';
+      });
+
+      // Return the word count
+      return words.length;
+    }
+
+    function readUploadedFile() {
+      var fileInput = document.getElementById('fileInput');
+      var file = fileInput.files[0];
+      var reader = new FileReader();
+
+      reader.onload = function(e) {
+        // Get the contents of the uploaded file
+        var fileContent = reader.result;
+
+        // Display the PDF contents
+        displayPDFText(fileContent);
+      }
+
+      if (file) {
+        // Read the uploaded file
+        reader.readAsArrayBuffer(file);
+      }
+    }
+
+    function displayPDFText(fileContent) {
+      var loadingTask = pdfjsLib.getDocument({ data: fileContent });
+
+      loadingTask.promise.then(function(pdf) {
+        var numPages = pdf.numPages;
+        var pdfText = "";
+
+        var getPageText = function(pageNum) {
+          return new Promise(function(resolve, reject) {
+            pdf.getPage(pageNum).then(function(page) {
+              page.getTextContent().then(function(textContent) {
+                var pageText = textContent.items.map(function(item) {
+                  return item.str;
+                }).join(" ");
+
+                resolve(pageText);
+              });
+            });
+          });
+        };
+
+        var getPageTextPromises = [];
+        for (var i = 1; i <= numPages; i++) {
+          getPageTextPromises.push(getPageText(i));
+        }
+
+        Promise.all(getPageTextPromises).then(function(pageTexts) {
+          pdfText = pageTexts.join("");
+
+          // Set the document text in the text input
+          var articleText = document.getElementById('articleText');
+          articleText.value = pdfText;
+
+          // Update word count
+          updateWordCount(articleText.value, 'articleWordCount');
+        });
+      });
+    }
+
+    function updateWordCount(text, elementId) {
+      var wordCount = countWords(text);
+      var wordCountElement = document.getElementById(elementId);
+      wordCountElement.textContent = wordCount;
+    }
+
+    function summary() {
+      var articleText = document.getElementById('articleText').value;
+      var summaryType = document.getElementById('summaryType').value;
+
+      // Display loading message
+      var summarizedTextElement = document.getElementById('summarizedText');
+      summarizedTextElement.value = 'Summarizing...';
+
+      // Send a POST request to the server
+      var xhr = new XMLHttpRequest();
+      xhr.open('POST', '/summary', true);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.onload = function() {
+        if (xhr.status === 200) {
+          var response = JSON.parse(xhr.responseText);
+
+          // Update the summarized text
+          summarizedTextElement.value = response.summarized_text;
+
+          // Update word count
+          updateWordCount(response.summarized_text, 'summaryWordCount');
+        } else {
+          summarizedTextElement.value = 'Error: ' + xhr.status;
+        }
+      };
+      xhr.onerror = function() {
+        summarizedTextElement.value = 'Error: ' + xhr.status;
+      };
+      xhr.send(JSON.stringify({ articleText: articleText, summaryType: summaryType }));
+    }
+  </script>
+</head>
+<body>
+  <h1>Text Summarization</h1>
+
+  <form>
+    <h2>Text Placement</h2>
+    <textarea id="articleText" name="articleText" placeholder="Paste or type the article text here" oninput="updateWordCount(this.value, 'articleWordCount')"></textarea>
+    <p class="word-count">Word Count: <span id="articleWordCount">0</span></p>
+
+    <h2>Upload Document (PDF)</h2>
+    <input type="file" id="fileInput" name="fileInput" accept=".pdf" onchange="readUploadedFile()">
+
+    <h2>Summary Type</h2>
+    <select id="summaryType" name="summaryType">
+      <option value="short">Short Summary</option>
+      <option value="long">Long Summary</option>
+    </select>
+
+    <h2>Summarized Text</h2>
+    <textarea id="summarizedText" name="summarizedText" readonly></textarea>
+    <p class="word-count">Word Count: <span id="summaryWordCount">0</span></p>
+
+    <button type="button" class="summary-button" onclick="summary()">Summarize</button>
+  </form>
+</body>
+</html>
