@@ -23,3 +23,18 @@ python app.py
 click the link in terminal output
 or
 follow link [http://127.0.0.5000]
+
+
+
+Methode 2
+
+
+# Run using Docker CMD in project terminal if laptop not configured with Nvidia/GPU 
+
+'
+docker login -u "myusername" -p "mypassword" docker.io
+'
+
+`
+docker pull rasikagulhane/summarization
+'
