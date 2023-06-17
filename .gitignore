@@ -127,7 +127,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
-DL_Venv/
+DL_Venv
 .DL_Venv
 
 # Spyder project settings

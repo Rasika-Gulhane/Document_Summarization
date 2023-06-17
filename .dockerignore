@@ -1,0 +1,6 @@
+Nlpenv/
+.git
+.gitignore
+Doc_Summarization_.ipynb
+documents_df.ipynb
+BBC News Summary

@@ -1,14 +1,14 @@
 numpy
 pandas
 matplotlib
-seaborn
 nltk
-tensorflow
 torch
 transformers
+flask
 pytorch-lightning
 rouge
 sentencepiece
 scikit-learn
 protobuf==3.20.0
-accelerate
+
+
